@@ -1,18 +1,20 @@
-# angstrom-cyclos
+# cyclos-sdk-py
 
 Production-grade Python SDK for the Cyclos 4.16 REST API.
+
+Published on PyPI as `cyclos-sdk-py`, imported as `angstrom_cyclos`.
 
 ## Installation
 
 ```bash
-pip install angstrom-cyclos
+pip install cyclos-sdk-py
 ```
 
 For development:
 
 ```bash
-git clone https://github.com/angstrom-technologies/angstrom-cyclos.git
-cd angstrom-cyclos
+git clone https://github.com/Angstrom-Technologies/cyclos-sdk-py.git
+cd cyclos-sdk-py
 pip install -e ".[dev]"
 ```
 
