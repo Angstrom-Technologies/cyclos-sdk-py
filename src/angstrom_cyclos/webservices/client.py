@@ -75,7 +75,7 @@ class WebServicesClient:
         data = response.json()
         token = data.get("token")
         if token:
-            self._client._transport.access_client_token = token
+            self._client._transport.access_client_token = f"{prefix or ''}{token}"
         return WebServiceClient.model_validate(data)
 
     def get_client(self, key: str) -> WebServiceClient:
@@ -118,7 +118,7 @@ class WebServicesClient:
         data = response.json()
         token = data.get("token")
         if token:
-            self._client._transport.access_client_token = token
+            self._client._transport.access_client_token = f"{prefix or ''}{token}"
         return WebServiceClient.model_validate(data)
 
     def deactivate_client(self, key: str) -> None:

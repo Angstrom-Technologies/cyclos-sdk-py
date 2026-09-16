@@ -36,7 +36,11 @@ class AsyncAuthClient:
         return Auth.model_validate(response.json())
 
     async def is_authenticated(self) -> bool:
-        return self._client._transport.session_token is not None
+        transport = self._client._transport
+        return transport.session_token is not None or transport.access_client_token is not None
+
+    async def set_access_client_token(self, token: str) -> None:
+        self._client._transport.access_client_token = token
 
     async def refresh(self) -> LoginAuth:
         config = self._client._config

@@ -13,6 +13,7 @@ def config() -> CyclosConfig:
         base_url="https://wallet.example.com/api",
         username="admin",
         password="secret",
+        access_client_token=None,
         timeout=5.0,
         verify_ssl=True,
         max_retries=2,

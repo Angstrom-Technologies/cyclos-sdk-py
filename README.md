@@ -38,6 +38,11 @@ client = CyclosClient(config)
 
 ```env
 CYCLOS_BASE_URL=https://wallet.angstrom-technologies.ug/uwallet/api
+# Preferred for API integrations: token returned by POST /clients/activate
+CYCLOS_ACCESS_CLIENT_TOKEN=...
+
+# Used for interactive login, initial access-client activation, or direct
+# HTTP Basic authentication when no access-client token is configured.
 CYCLOS_USERNAME=service_client
 CYCLOS_PASSWORD=...
 CYCLOS_TIMEOUT=30
@@ -48,16 +53,58 @@ CYCLOS_RETRY_BACKOFF=0.5
 
 ## Authentication
 
+For server-to-server integrations, configure the access-client token returned by
+Cyclos `POST /clients/activate`. The SDK sends it as `Access-Client-Token` and
+does not require a client ID or client secret:
+
 ```python
+from pydantic import SecretStr
 from angstrom_cyclos import CyclosClient, CyclosConfig
 
+config = CyclosConfig(
+    base_url="https://wallet.angstrom-technologies.ug/uwallet/api",
+    access_client_token=SecretStr("your-activated-access-client-token"),
+)
+client = CyclosClient(config)
+```
+
+To activate a client initially, authenticate the user, then exchange the manual
+activation code. If a prefix is supplied, the SDK prepends it to the returned
+token before storing and using it:
+
+```python
+client.auth.login("customer", "password")
+result = client.webservices.activate_client(code="123456", prefix="stable-app-prefix")
+# Subsequent requests use the full token in Access-Client-Token.
+```
+
+Session login remains available for interactive workflows:
+
+```python
 config = CyclosConfig.from_env()
 client = CyclosClient(config)
-
 client.auth.login("customer", "password")
 print(client.auth.is_authenticated())
-
 client.auth.logout()
+```
+
+### Using Basic authentication directly
+
+If you configure ``username`` and ``password`` but do not set an
+``access_client_token``, the SDK sends HTTP Basic authentication on every
+request automatically. This is useful for admin/service accounts that call
+endpoints such as ``POST /users`` or ``POST /system/payments`` without a
+separate login step:
+
+```python
+config = CyclosConfig(
+    base_url="https://wallet.angstrom-technologies.ug/uwallet/api",
+    username="service_client",
+    password=SecretStr("..."),
+)
+client = CyclosClient(config)
+# All subsequent requests include Basic auth.
+accounts = client.accounts.list("angstromUg")
 ```
 
 ## Creating members

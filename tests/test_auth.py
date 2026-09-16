@@ -5,6 +5,7 @@ from __future__ import annotations
 import httpx
 import pytest
 import respx
+from pydantic import SecretStr
 
 from angstrom_cyclos import CyclosAuthenticationError, CyclosClient, CyclosConfig
 
@@ -75,3 +76,15 @@ def test_is_authenticated(config: CyclosConfig) -> None:
     assert not client.auth.is_authenticated()
     client._transport.session_token = "x"
     assert client.auth.is_authenticated()
+
+
+def test_access_client_token_from_config_is_used() -> None:
+    config = CyclosConfig(
+        base_url="https://wallet.example.com/api",
+        access_client_token=SecretStr("activated-token"),
+    )
+    client = CyclosClient(config)
+
+    assert client.auth.is_authenticated()
+    headers = client._transport._build_headers()
+    assert headers["Access-Client-Token"] == "activated-token"

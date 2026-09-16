@@ -87,3 +87,22 @@ def test_pagination_next_page_indicator(config: CyclosConfig) -> None:
         total_count=None,
     )
     assert page.has_next is True
+
+
+@respx.mock
+def test_basic_auth_fallback_when_no_token(config: CyclosConfig) -> None:
+    """Configured credentials are sent as Basic auth when no token is active."""
+    client = CyclosClient(config)
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"id": "u1", "username": "alice"})
+
+    respx.get("https://wallet.example.com/api/users/u1").mock(side_effect=handler)
+    client.members.get("u1")
+
+    assert len(requests) == 1
+    authorization = requests[0].headers.get("Authorization")
+    assert authorization is not None
+    assert authorization.startswith("Basic ")

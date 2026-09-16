@@ -41,6 +41,13 @@ class CyclosConfig(BaseSettings):
         default=None,
         description="Cyclos password used for HTTP Basic authentication during login.",
     )
+    access_client_token: SecretStr | None = Field(
+        default=None,
+        description=(
+            "Token returned by POST /clients/activate and sent in the "
+            "Access-Client-Token header."
+        ),
+    )
     timeout: float = Field(
         default=DEFAULT_TIMEOUT,
         ge=1.0,

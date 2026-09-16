@@ -149,7 +149,14 @@ class _BaseTransport:
     def __init__(self, config: CyclosConfig) -> None:
         self.config = config
         self.session_token: str | None = None
-        self.access_client_token: str | None = None
+        self.access_client_token = (
+            config.access_client_token.get_secret_value() if config.access_client_token else None
+        )
+        self._basic_auth: tuple[str, str] | None = (
+            (config.username, config.password.get_secret_value())
+            if config.username and config.password
+            else None
+        )
         self.correlation_id: str | None = None
         self.base_url = str(config.base_url)
         self._idempotent_keys: set[str] = set()
@@ -187,6 +194,14 @@ class _BaseTransport:
     def _record_idempotency(self, method: str, idempotency_key: str | None) -> None:
         if method.upper() == "POST" and idempotency_key:
             self._idempotent_keys.add(idempotency_key)
+
+    def _default_auth(self, auth: tuple[str, str] | None) -> tuple[str, str] | None:
+        """Return configured Basic auth when no token is currently active."""
+        if auth is not None:
+            return auth
+        if self.session_token or self.access_client_token:
+            return None
+        return self._basic_auth
 
     def _safe_log_url(self, url: httpx.URL) -> str:
         return _redact_url(url)
@@ -276,7 +291,8 @@ class HTTPTransport(_BaseTransport):
             json=encoded,
             headers=req_headers,
         )
-        return request, req_headers, auth
+        effective_auth = self._default_auth(auth)
+        return request, req_headers, effective_auth
 
     def request(
         self,
@@ -520,7 +536,8 @@ class AsyncHTTPTransport(_BaseTransport):
             json=encoded,
             headers=req_headers,
         )
-        return request, req_headers, auth
+        effective_auth = self._default_auth(auth)
+        return request, req_headers, effective_auth
 
     async def request(
         self,

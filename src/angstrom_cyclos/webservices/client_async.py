@@ -57,7 +57,7 @@ class AsyncWebServicesClient:
         data = response.json()
         token = data.get("token")
         if token:
-            self._client._transport.access_client_token = token
+            self._client._transport.access_client_token = f"{prefix or ''}{token}"
         return WebServiceClient.model_validate(data)
 
     async def get_client(self, key: str) -> WebServiceClient:
@@ -91,7 +91,7 @@ class AsyncWebServicesClient:
         data = response.json()
         token = data.get("token")
         if token:
-            self._client._transport.access_client_token = token
+            self._client._transport.access_client_token = f"{prefix or ''}{token}"
         return WebServiceClient.model_validate(data)
 
     async def deactivate_client(self, key: str) -> None:

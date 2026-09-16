@@ -31,6 +31,25 @@ def test_create_client(config: CyclosConfig) -> None:
 
 
 @respx.mock
+def test_activate_client_stores_full_prefixed_token(config: CyclosConfig) -> None:
+    client = CyclosClient(config)
+    client._transport.session_token = "token"
+    route = respx.post("https://wallet.example.com/api/clients/activate").mock(
+        return_value=httpx.Response(
+            200,
+            json={"token": "generated-token", "accessClient": {"id": "c1"}},
+        )
+    )
+
+    result = client.webservices.activate_client(code="123456", prefix="app-prefix")
+
+    assert result.id == "c1"
+    assert client._transport.access_client_token == "app-prefixgenerated-token"
+    assert route.calls.last.request.url.params["code"] == "123456"
+    assert route.calls.last.request.url.params["prefix"] == "app-prefix"
+
+
+@respx.mock
 def test_get_client(config: CyclosConfig) -> None:
     client = CyclosClient(config)
     client._transport.session_token = "token"

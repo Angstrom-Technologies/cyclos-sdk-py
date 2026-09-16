@@ -47,8 +47,13 @@ class AuthClient:
         return Auth.model_validate(response.json())
 
     def is_authenticated(self) -> bool:
-        """Return ``True`` if a session token is currently stored."""
-        return self._client._transport.session_token is not None
+        """Return whether a session or access-client token is currently stored."""
+        transport = self._client._transport
+        return transport.session_token is not None or transport.access_client_token is not None
+
+    def set_access_client_token(self, token: str) -> None:
+        """Set a token returned by ``POST /clients/activate`` for subsequent requests."""
+        self._client._transport.access_client_token = token
 
     def refresh(self) -> LoginAuth:
         """Refresh the current session if supported.

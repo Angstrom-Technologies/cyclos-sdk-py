@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.1.0 (Unreleased)
+## 0.2.0 (Unreleased)
+
+### Added
+- Automatic HTTP Basic authentication fallback on every request when
+  `username`/`password` are configured and no session or access-client token is
+  active. This enables admin/service accounts to call Cyclos endpoints such as
+  `POST /users` and `POST /system/payments` without an explicit login step.
+
+## 0.1.0
 
 ### Added
 - Initial production-grade Python SDK for Cyclos 4.16 REST API.
