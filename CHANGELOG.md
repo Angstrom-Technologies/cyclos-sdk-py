@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.2.0 (Unreleased)
+## 0.2.1 (Unreleased)
+
+### Fixed
+- `Member.status` now accepts both `EntityReference` and plain strings such as
+  `"active"`, matching the live Cyclos `/users/{user}` response format.
+
+## 0.2.0
 
 ### Added
 - Automatic HTTP Basic authentication fallback on every request when

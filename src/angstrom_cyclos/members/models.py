@@ -60,7 +60,7 @@ class Member(UserReference):
     username: str | None = None
     email: str | None = None
     group: EntityReference | None = None
-    status: EntityReference | None = None
+    status: str | EntityReference | None = None
     custom_values: dict[str, str] | None = Field(default=None, alias="customValues")
 
 

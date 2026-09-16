@@ -43,3 +43,6 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local scratch scripts that may contain credentials
+test_cyclos.py
