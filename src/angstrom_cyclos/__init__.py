@@ -1,6 +1,6 @@
 """angstrom-cyclos: Python SDK for Cyclos 4.16 REST API."""
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 from angstrom_cyclos.async_client import AsyncCyclosClient
 from angstrom_cyclos.client import CyclosClient

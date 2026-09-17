@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from angstrom_cyclos.models import (
     AccountReference,
@@ -48,6 +48,14 @@ class Transfer(CyclosBaseModel):
     status: TransferStatus | None = None
     cyclos_status: str | None = None
     kind: str | None = None
+
+    @field_validator("currency", mode="before")
+    @classmethod
+    def _normalize_currency(cls, value: Any) -> str | None:
+        """Cyclos returns currency as either an internal name string or a full object."""
+        if isinstance(value, dict):
+            return value.get("internalName") or value.get("symbol") or value.get("id") or None
+        return value
 
     @classmethod
     def from_cyclos_transaction(cls, data: dict[str, Any]) -> Transfer:
