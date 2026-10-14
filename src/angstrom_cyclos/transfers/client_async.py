@@ -49,30 +49,21 @@ class AsyncTransfersClient:
             json=payload.model_dump(exclude_none=True, exclude={"idempotency_key"}, by_alias=True),
             idempotency_key=idempotency_key,
         )
-        transfer = Transfer.from_cyclos_transaction(response.json())
-        if transfer.id and not transfer.transaction_id:
-            transfer.transaction_id = await self.resolve_transaction_id(transfer.id)
-        return transfer
-
-    async def resolve_transaction_id(self, transfer_id: str) -> str:
-        candidates = (await self._client.transactions.search(
-            transfer_id=transfer_id, page_size=10,
-        )).items
-        exact = []
-        for candidate in candidates:
-            if not candidate.id:
-                continue
-            detail = candidate if candidate.transfer_id else await self._client.transactions.get(
-                candidate.id
-            )
-            if detail.transfer_id == transfer_id:
-                exact.append(candidate.id)
-        if len(exact) != 1:
+        data = response.json()
+        transaction_id = data.get("id") if isinstance(data, dict) else None
+        if not transaction_id:
+            raise CyclosTransferError("Cyclos payment response did not contain a transaction id")
+        if not isinstance(data.get("transfer"), dict):
+            response = await self._client._transport.get(f"/transactions/{transaction_id}")
+            data = response.json()
+        nested = data.get("transfer") if isinstance(data, dict) else None
+        if not isinstance(nested, dict) or not nested.get("id"):
             raise CyclosTransferError(
-                f"Expected one exact transaction for transfer {transfer_id}, "
-                f"found {len(exact)} among {len(candidates)} candidates"
+                f"Cyclos transaction {transaction_id} did not contain a nested transfer id"
             )
-        return exact[0]
+        transfer = Transfer.from_cyclos_transaction(data)
+        transfer.transaction_id = str(transaction_id)
+        return transfer
 
     async def get(self, transfer_id: str) -> Transfer:
         response = await self._client._transport.get(f"/transfers/{transfer_id}")
