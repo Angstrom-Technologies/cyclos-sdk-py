@@ -10,6 +10,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
+from angstrom_cyclos.exceptions import CyclosTransferError
 from angstrom_cyclos.models import PaginatedResult
 from angstrom_cyclos.transfers.models import Transfer, TransferCreate
 
@@ -72,7 +73,15 @@ class TransfersClient:
             json=payload.model_dump(exclude_none=True, exclude={"idempotency_key"}, by_alias=True),
             idempotency_key=idempotency_key,
         )
-        return Transfer.from_cyclos_transaction(response.json())
+        transfer = Transfer.from_cyclos_transaction(response.json())
+        if transfer.id and not transfer.transaction_id:
+            matches = self._client.transactions.search(transfer_id=transfer.id, page_size=2).items
+            if len(matches) != 1 or not matches[0].id:
+                raise CyclosTransferError(
+                    f"Expected one transaction for transfer {transfer.id}, found {len(matches)}"
+                )
+            transfer.transaction_id = matches[0].id
+        return transfer
 
     def get(self, transfer_id: str) -> Transfer:
         """Retrieve a transfer by id."""

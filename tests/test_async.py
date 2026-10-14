@@ -70,3 +70,35 @@ async def test_async_transfer(config: CyclosConfig) -> None:
     assert transfer.transaction_id == "transaction-1"
     assert transfer.amount == Decimal("50000")
     assert transfer.status == "SUCCESS"
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_async_direct_transfer_resolves_transaction_id(config: CyclosConfig) -> None:
+    respx.post("https://wallet.example.com/api/alice/payments").mock(
+        return_value=httpx.Response(
+            201,
+            json={
+                "id": "transfer-1",
+                "amount": "50000",
+                "currency": "UGX",
+                "kind": "payment",
+            },
+        )
+    )
+    respx.get(
+        "https://wallet.example.com/api/transactions",
+        params={"page": 0, "pageSize": 2, "transferId": "transfer-1"},
+    ).mock(return_value=httpx.Response(200, json=[{"id": "transaction-1"}]))
+
+    async with AsyncCyclosClient(config) as client:
+        client._transport.session_token = "tok"
+        transfer = await client.transfers.create(
+            transfer_type="walletTransfer",
+            from_account="alice",
+            to_account="bob",
+            amount=Decimal("50000"),
+        )
+
+    assert transfer.id == "transfer-1"
+    assert transfer.transaction_id == "transaction-1"
