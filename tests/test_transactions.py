@@ -18,7 +18,12 @@ def test_get_transaction(config: CyclosConfig) -> None:
             json={
                 "id": "t1",
                 "amount": "10000",
-                "currency": "UGX",
+                "currency": {
+                    "id": "currency-1",
+                    "internalName": "unit",
+                    "symbol": "UGX",
+                    "decimalDigits": 2,
+                },
                 "kind": "payment",
                 "transfer": {"id": "transfer-1"},
             },
@@ -27,6 +32,7 @@ def test_get_transaction(config: CyclosConfig) -> None:
     transaction = client.transactions.get("t1")
     assert transaction.id == "t1"
     assert transaction.transfer_id == "transfer-1"
+    assert transaction.currency == "unit"
 
 
 @respx.mock

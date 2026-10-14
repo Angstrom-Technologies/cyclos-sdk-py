@@ -97,11 +97,13 @@ def test_direct_transfer_selects_exact_candidate(config: CyclosConfig) -> None:
     respx.get("https://wallet.example.com/api/transactions/wrong").mock(
         return_value=httpx.Response(200, json={
             "id": "wrong", "transfer": {"id": "other-transfer"},
+            "currency": {"internalName": "unit", "symbol": "UGX"},
         })
     )
     respx.get("https://wallet.example.com/api/transactions/correct").mock(
         return_value=httpx.Response(200, json={
             "id": "correct", "transfer": {"id": "transfer-1"},
+            "currency": {"internalName": "unit", "symbol": "UGX"},
         })
     )
 
