@@ -42,11 +42,17 @@ async def test_async_transfer(config: CyclosConfig) -> None:
         return_value=httpx.Response(
             201,
             json={
-                "id": "t1",
+                "id": "transaction-1",
                 "amount": "50000",
                 "currency": "UGX",
                 "status": "processed",
                 "kind": "payment",
+                "transfer": {
+                    "id": "transfer-1",
+                    "amount": "50000",
+                    "currency": "UGX",
+                    "kind": "payment",
+                },
             },
         )
     )
@@ -60,5 +66,7 @@ async def test_async_transfer(config: CyclosConfig) -> None:
             amount=Decimal("50000"),
             currency="UGX",
         )
+    assert transfer.id == "transfer-1"
+    assert transfer.transaction_id == "transaction-1"
     assert transfer.amount == Decimal("50000")
     assert transfer.status == "SUCCESS"

@@ -19,12 +19,18 @@ def test_successful_transfer(config: CyclosConfig) -> None:
         return_value=httpx.Response(
             201,
             json={
-                "id": "t1",
+                "id": "7700235755637429542",
                 "amount": "50000",
                 "currency": "UGX",
                 "description": "P2P transfer",
                 "status": "processed",
                 "kind": "payment",
+                "transfer": {
+                    "id": "7700235755636983974",
+                    "amount": "50000",
+                    "currency": "UGX",
+                    "kind": "payment",
+                },
             },
         )
     )
@@ -37,6 +43,8 @@ def test_successful_transfer(config: CyclosConfig) -> None:
         description="P2P transfer",
         idempotency_key="TXN-20260909-000001",
     )
+    assert transfer.id == "7700235755636983974"
+    assert transfer.transaction_id == "7700235755637429542"
     assert transfer.amount == Decimal("50000")
     assert transfer.status == "SUCCESS"
 
