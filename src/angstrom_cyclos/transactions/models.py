@@ -14,6 +14,7 @@ class Transaction(CyclosBaseModel):
     """Cyclos transaction result."""
 
     id: str | None = None
+    transfer_id: str | None = None
     transaction_number: str | None = Field(default=None, alias="transactionNumber")
     date: str | None = None
     amount: Decimal | None = None
@@ -31,4 +32,8 @@ class Transaction(CyclosBaseModel):
         """Normalize a Cyclos transaction overview/detail response."""
         if not isinstance(data, dict):
             raise ValueError("Transaction data must be a dict")
-        return cls.model_validate(data)
+        nested = data.get("transfer")
+        values = dict(data)
+        if isinstance(nested, dict) and nested.get("id"):
+            values["transfer_id"] = str(nested["id"])
+        return cls.model_validate(values)

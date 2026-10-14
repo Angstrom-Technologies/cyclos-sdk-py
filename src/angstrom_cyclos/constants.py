@@ -1,6 +1,6 @@
 """Package constants and defaults."""
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_MAX_RETRIES = 3

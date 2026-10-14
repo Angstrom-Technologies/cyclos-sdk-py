@@ -20,11 +20,13 @@ def test_get_transaction(config: CyclosConfig) -> None:
                 "amount": "10000",
                 "currency": "UGX",
                 "kind": "payment",
+                "transfer": {"id": "transfer-1"},
             },
         )
     )
     transaction = client.transactions.get("t1")
     assert transaction.id == "t1"
+    assert transaction.transfer_id == "transfer-1"
 
 
 @respx.mock

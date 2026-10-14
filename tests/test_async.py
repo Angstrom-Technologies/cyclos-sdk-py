@@ -88,8 +88,11 @@ async def test_async_direct_transfer_resolves_transaction_id(config: CyclosConfi
     )
     respx.get(
         "https://wallet.example.com/api/transactions",
-        params={"page": 0, "pageSize": 2, "transferId": "transfer-1"},
-    ).mock(return_value=httpx.Response(200, json=[{"id": "transaction-1"}]))
+        params={"page": 0, "pageSize": 10, "transferId": "transfer-1"},
+    ).mock(return_value=httpx.Response(200, json=[
+        {"id": "wrong-transaction", "transfer": {"id": "other-transfer"}},
+        {"id": "transaction-1", "transfer": {"id": "transfer-1"}},
+    ]))
 
     async with AsyncCyclosClient(config) as client:
         client._transport.session_token = "tok"

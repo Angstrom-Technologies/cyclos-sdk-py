@@ -66,8 +66,11 @@ def test_direct_transfer_resolves_transaction_id(config: CyclosConfig) -> None:
     )
     respx.get(
         "https://wallet.example.com/api/transactions",
-        params={"page": 0, "pageSize": 2, "transferId": "7700235755636928294"},
-    ).mock(return_value=httpx.Response(200, json=[{"id": "7700235755637429000"}]))
+        params={"page": 0, "pageSize": 10, "transferId": "7700235755636928294"},
+    ).mock(return_value=httpx.Response(200, json=[{
+        "id": "7700235755637429000",
+        "transfer": {"id": "7700235755636928294"},
+    }]))
 
     transfer = client.transfers.create(
         transfer_type="smsWallet.smsCharge",
@@ -81,6 +84,38 @@ def test_direct_transfer_resolves_transaction_id(config: CyclosConfig) -> None:
 
 
 @respx.mock
+def test_direct_transfer_selects_exact_candidate(config: CyclosConfig) -> None:
+    client = CyclosClient(config)
+    client._transport.session_token = "token"
+    respx.post("https://wallet.example.com/api/alice/payments").mock(
+        return_value=httpx.Response(201, json={"id": "transfer-1", "amount": "500"})
+    )
+    respx.get(
+        "https://wallet.example.com/api/transactions",
+        params={"page": 0, "pageSize": 10, "transferId": "transfer-1"},
+    ).mock(return_value=httpx.Response(200, json=[{"id": "wrong"}, {"id": "correct"}]))
+    respx.get("https://wallet.example.com/api/transactions/wrong").mock(
+        return_value=httpx.Response(200, json={
+            "id": "wrong", "transfer": {"id": "other-transfer"},
+        })
+    )
+    respx.get("https://wallet.example.com/api/transactions/correct").mock(
+        return_value=httpx.Response(200, json={
+            "id": "correct", "transfer": {"id": "transfer-1"},
+        })
+    )
+
+    transfer = client.transfers.create(
+        transfer_type="smsWallet.smsCharge",
+        from_account="alice",
+        to_account="system",
+        amount=Decimal("500"),
+    )
+
+    assert transfer.transaction_id == "correct"
+
+
+@respx.mock
 def test_direct_transfer_requires_one_matching_transaction(config: CyclosConfig) -> None:
     client = CyclosClient(config)
     client._transport.session_token = "token"
@@ -89,10 +124,10 @@ def test_direct_transfer_requires_one_matching_transaction(config: CyclosConfig)
     )
     respx.get(
         "https://wallet.example.com/api/transactions",
-        params={"page": 0, "pageSize": 2, "transferId": "transfer-1"},
+        params={"page": 0, "pageSize": 10, "transferId": "transfer-1"},
     ).mock(return_value=httpx.Response(200, json=[]))
 
-    with pytest.raises(CyclosTransferError, match="Expected one transaction"):
+    with pytest.raises(CyclosTransferError, match="Expected one exact transaction"):
         client.transfers.create(
             transfer_type="smsWallet.smsCharge",
             from_account="alice",
@@ -137,8 +172,10 @@ def test_duplicate_transfer_rejected(config: CyclosConfig) -> None:
     )
     respx.get(
         "https://wallet.example.com/api/transactions",
-        params={"page": 0, "pageSize": 2, "transferId": "t1"},
-    ).mock(return_value=httpx.Response(200, json=[{"id": "txn-1"}]))
+        params={"page": 0, "pageSize": 10, "transferId": "t1"},
+    ).mock(return_value=httpx.Response(200, json=[{
+        "id": "txn-1", "transfer": {"id": "t1"},
+    }]))
     client.transfers.create(
         transfer_type="walletTransfer",
         from_account="alice",
